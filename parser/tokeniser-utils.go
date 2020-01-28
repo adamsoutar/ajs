@@ -10,6 +10,7 @@ const (
   tkKeyword
   tkOperator
   tkLineTerminator
+  tkPunctuation
 )
 
 type token interface {
@@ -19,6 +20,13 @@ type token interface {
 type lineTerminatorToken struct {}
 func (l lineTerminatorToken) getTokenType () tokenType {
   return tkLineTerminator
+}
+
+type punctuationToken struct {
+  punctuation string
+}
+func (p punctuationToken) getTokenType () tokenType {
+  return tkPunctuation
 }
 
 type stringToken struct {
@@ -66,12 +74,11 @@ func inArray (str string, arr []string) bool {
 }
 
 func isOperatorChar (str string) bool {
-  opChars := strings.Split("=!&|+-/*%><^", "")
+  opChars := strings.Split("=!&|+-/*%><^.", "")
   return inArray(str, opChars)
 }
 func isOperator (str string) bool {
-  // TODO: More operators like bitwise
-  ops := []string { "==", "=", "!=", ">=", "<=", "||", "&&", "!", "^", "+", "-", "*", "/" }
+  ops := getOperators()
   return inArray(str, ops)
 }
 
@@ -80,9 +87,14 @@ func isKeyword (str string) bool {
   return inArray(str, res)
 }
 
+func isPunctuation (str string) bool {
+  punc := strings.Split("(,)", "")
+  return inArray(str, punc)
+}
+
 // TODO: Automatic Semicolon Insertion
 func isLineTerminator (str string) bool {
-  terms := []string { ";", "\n" }
+  terms := strings.Split(";\n", "")
   return inArray(str, terms)
 }
 

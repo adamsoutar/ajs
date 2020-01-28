@@ -36,13 +36,77 @@ func (p *Parser) isNextOperator () bool {
   return p.tokens.peek().getTokenType() == tkOperator
 }
 
-func (p *Parser) mightBeBinary (left astNode, myPrecedence int) astNode {
-  if p.isNextOperator() {
-    var op = p.tokens.peek().(operatorToken)
-
-    var theirPrecedence =
+func (p *Parser) expectPunctuation (punc string) {
+  var t = p.tokens.read()
+  if t.getTokenType() != tkPunctuation || t.(punctuationToken).punctuation != punc {
+    panic("Expected punctuation \"" + punc + "\"")
   }
-  return left
+}
+
+func (p *Parser) isNextPunctuation (punc string) bool {
+  var t = p.tokens.peek()
+  if t.getTokenType() != tkPunctuation || t.(punctuationToken).punctuation != punc {
+    return false
+  }
+  return true
+}
+
+func (p *Parser) parseDelimited (opening string, delim string, closing string) []astNode {
+  var args []astNode
+  p.expectPunctuation(opening)
+
+  for true {
+    args = append(args, p.parseComponent(false))
+
+    if !p.isNextPunctuation(delim) {
+      break
+    }
+    // Read in the comma
+    p.tokens.read()
+  }
+
+  p.expectPunctuation(closing)
+  return args
+}
+
+func (p *Parser) mightBeCall (node astNode) astNode {
+  // TODO: Panic if we're calling something stupid eg. 3.14("Hello")
+  if p.isNextPunctuation("(") {
+    return astNodeFunctionCall{
+      funcName: node,
+      args: p.parseDelimited("(", ",", ")"),
+    }
+  }
+  return node
+}
+
+func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
+  if p.isNextOperator() {
+    var op = p.tokens.peek().(operatorToken).operator
+
+    var theirPrecedence = operatorPrecedence[op]
+    var theirAssociativity = operatorAssociativity[op]
+    if theirPrecedence > myPrecedence {
+      p.tokens.read()
+
+      if theirAssociativity == rightAssociative {
+        return p.mightBeBinary(astNodeBinary{
+          operator: op,
+          left: me,
+          right: p.mightBeBinary(p.mightBeCall(p.parseAtom(false)), theirPrecedence),
+        }, myPrecedence)
+      } else if theirAssociativity == leftAssociative {
+        var them = p.mightBeCall(p.parseAtom(false))
+        return p.mightBeBinary(astNodeBinary{
+          operator: op,
+          left: me,
+          right: them,
+          // TODO: Should the below be 'theirPrecedence'?
+        }, myPrecedence)
+      }
+    }
+  }
+  return me
 }
 
 func (p *Parser) parseAssigment (isConst bool) astNode {
@@ -67,8 +131,6 @@ func (p *Parser) parseAssigment (isConst bool) astNode {
 
   var value = p.parseComponent(false)
 
-  p.expectToken(tkLineTerminator)
-
   return astNodeAssignment{
     value: value,
     vars: vars,
@@ -85,8 +147,7 @@ func (p *Parser) expectToken (typ tokenType) token {
 }
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
-  // TODO: Wrap this in mightBeBinary etc.
-  return p.parseAtom(acceptStatements)
+  return p.mightBeBinary(p.mightBeCall(p.parseAtom(acceptStatements)), 0)
 }
 
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
@@ -100,9 +161,10 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
     return astNodeNumber{value:t.(numberToken).value}
   case tkString:
     return astNodeString{value:t.(stringToken).value}
+  case tkIdentifier:
+    return astNodeIdentifier{name:t.(identifierToken).value}
   }
 
-  // Statement
   if !acceptStatements {
     panic("Attempted to use a statement somewhere where they are not allowed")
   }
@@ -127,9 +189,8 @@ func (p *Parser) parseStatement (t token) astNode {
 func (p *Parser) ParseAST () {
   var ast []astNode
   for !p.tokens.endOfStream {
-    // TODO: See if we actually want to parse an expression
-    //       eg. a line that just has a function call
     ast = append(ast, p.parseComponent(true))
+    p.expectToken(tkLineTerminator)
   }
   p.ast = ast
 }

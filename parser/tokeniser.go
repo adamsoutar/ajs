@@ -92,11 +92,16 @@ func (t *tokenStream) readNext () token {
     return t.readOperator()
   }
   // Numbers and identifiers overlap, but numbers come first
+  // TODO: Numbers like .5, that looks like the member access operator
   if isNumberChar(ch) {
     return t.readNumber()
   }
   if isIdentifierChar(ch) {
     return t.readIdentifierOrKeyword()
+  }
+  if isPunctuation(ch) {
+    t.code.read()
+    return punctuationToken{punctuation:ch}
   }
   if isLineTerminator(ch) {
     t.code.read()

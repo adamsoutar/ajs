@@ -7,10 +7,19 @@ const (
 	astIdentifier
 	astBinary
 	astAssignment
+	astFunctionCall
+	astBlock
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeBlock struct {
+	nodes []astNode
+}
+func (b astNodeBlock) getNodeType () astType {
+	return astBlock
 }
 
 type astNodeString struct {
@@ -18,6 +27,14 @@ type astNodeString struct {
 }
 func (s astNodeString) getNodeType () astType {
 	return astString
+}
+
+type astNodeFunctionCall struct {
+	funcName astNode
+	args []astNode
+}
+func (f astNodeFunctionCall) getNodeType () astType {
+	return astFunctionCall
 }
 
 type astNodeNumber struct {
