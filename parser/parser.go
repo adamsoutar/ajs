@@ -5,8 +5,19 @@ type Parser struct {
   ast []astNode
 }
 
-func (p *Parser) isNextOperator () bool {
-  return p.tokens.peek().getTokenType() == tkOperator
+func (p *Parser) isNextOperator (params ...string) bool {
+  var opNext = p.tokens.peek()
+  var isOp = opNext.getTokenType() == tkOperator
+  // Optional arg specifies 'Is there an operator next' vs 'Is THIS operator next?'
+  if len(params) == 0 {
+    return isOp
+  }
+
+  if len(params) > 1 {
+    panic("Too many args for isNextOperator")
+  }
+
+  return isOp && opNext.(operatorToken).operator == params[0]
 }
 
 func (p *Parser) expectPunctuation (punc string) {
@@ -28,7 +39,7 @@ func (p *Parser) parseDelimited (opening string, delim string, closing string) [
   var args []astNode
   p.expectPunctuation(opening)
 
-  for true {
+  for {
     args = append(args, p.parseComponent(false))
 
     if !p.isNextPunctuation(delim) {
@@ -59,33 +70,42 @@ func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
 
     var theirPrecedence = operatorPrecedence[op]
     var theirAssociativity = operatorAssociativity[op]
+    if theirAssociativity != rightAssociative {
+      panic("Wasn't expecting an with right associativity here!")
+    }
+
     if theirPrecedence > myPrecedence {
       p.tokens.read()
+      var them = p.parseComponent(false)
 
-      if theirAssociativity == rightAssociative {
-        return p.mightBeBinary(astNodeBinary{
-          operator: op,
-          left: me,
-          right: p.mightBeBinary(p.mightBeCall(p.parseAtom(false)), theirPrecedence),
-        }, myPrecedence)
-      } else if theirAssociativity == leftAssociative {
-        var them = p.mightBeCall(p.parseAtom(false))
-        return p.mightBeBinary(astNodeBinary{
-          operator: op,
-          left: me,
-          right: them,
-          // TODO: Should the below be 'theirPrecedence'?
-        }, myPrecedence)
+      var node = astNodeBinary{
+        operator: op,
+        left: me,
+        right: them,
       }
+
+      return p.mightBeBinary(node, myPrecedence)
     }
   }
+  return me
+}
+
+func (p *Parser) mightBePropertyAccess (me astNode) astNode {
+  if p.isNextOperator(".") {
+    p.tokens.read()
+    return astNodePropertyAccess{
+      object: me,
+      property: p.parseAtom(false),
+    }
+  }
+
   return me
 }
 
 func (p *Parser) parseAssigment (isConst bool) astNode {
   // Read in the vars
   var vars []string
-  for true {
+  for {
     var t = p.tokens.read()
     if t.getTokenType() != tkIdentifier {
       panic("Attempted assignment to something that's not a variable. ie. let 3 = 4")
@@ -120,7 +140,10 @@ func (p *Parser) expectToken (typ tokenType) token {
 }
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
-  return p.mightBeBinary(p.mightBeCall(p.parseAtom(acceptStatements)), 0)
+  return p.mightBeBinary(
+    p.mightBeCall(
+      p.mightBePropertyAccess(
+      p.parseAtom(acceptStatements))), 0)
 }
 
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
@@ -159,13 +182,15 @@ func (p *Parser) parseStatement (t token) astNode {
   panic("Unhandled AST node type in parseStatement!")
 }
 
-func (p *Parser) ParseAST () {
+func (p *Parser) ParseAST () []astNode {
   var ast []astNode
   for !p.tokens.endOfStream {
     ast = append(ast, p.parseComponent(true))
     p.expectToken(tkLineTerminator)
   }
   p.ast = ast
+
+  return p.ast
 }
 
 func New (code string) Parser {

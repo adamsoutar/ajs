@@ -13,6 +13,6 @@ func main () {
   }
 
   var p = parser.New(string(codeBytes))
-  p.ParseAST()
+  /*var AST = */p.ParseAST()
   fmt.Println("AST generated")
 }

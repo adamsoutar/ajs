@@ -9,10 +9,19 @@ const (
 	astAssignment
 	astFunctionCall
 	astBlock
+	astPropertyAccess
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodePropertyAccess struct {
+	object astNode
+	property astNode
+}
+func (p astNodePropertyAccess) getNodeType () astType {
+	return astPropertyAccess
 }
 
 type astNodeBlock struct {
