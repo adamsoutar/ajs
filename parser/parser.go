@@ -152,6 +152,10 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
   // Attempt to parse an expression
   // TODO: Bracketed expressions
 
+  if t.getTokenType() == tkLineTerminator {
+    return astNodeEmptyStatement{}
+  }
+
   switch t.getTokenType() {
   case tkNumber:
     return astNodeNumber{value:t.(numberToken).value}
@@ -161,11 +165,90 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
     return astNodeIdentifier{name:t.(identifierToken).value}
   }
 
+  // Non-statement keyword expressions
+  // Like function
+  if t.getTokenType() == tkKeyword {
+    var keyword = t.(keywordToken).value
+    if keyword == "function" {
+      return p.parseFunctionDefinition()
+    }
+  }
+
+  if !acceptStatements {
+    // TODO: If expecting an expression and you see {, parse an object here
+  }
+
   if !acceptStatements {
     panic("Attempted to use a statement somewhere where they are not allowed")
   }
 
   return p.parseStatement(t)
+}
+
+func (p *Parser) parseFunctionDefinition () astNode {
+  // Function keyword has already been consumed by parseAtom
+
+  var nameTkn = p.tokens.read()
+  if nameTkn.getTokenType() != tkIdentifier {
+    panic("Function name must be an identifier")
+  }
+  var name = nameTkn.(identifierToken).value
+
+  p.expectPunctuation("(")
+  var params []string
+  if !p.isNextPunctuation(")") {
+    // This function takes parameters, let's get them
+    // TODO: Default parameters
+    for {
+      var nextParam = p.tokens.read()
+      if nextParam.getTokenType() != tkIdentifier {
+        panic("Function parameters must be identifiers")
+      }
+
+      params = append(params, nextParam.(identifierToken).value)
+
+      if !p.isNextPunctuation(",") {
+        break
+      }
+      // Consume the comma
+      p.tokens.read()
+    }
+  }
+  p.expectPunctuation(")")
+
+  var body = p.parseBlockStatement(true)
+
+  return astNodeFunctionDefinition{
+    name: name,
+    params: params,
+    body: body,
+  }
+}
+
+func (p *Parser) parseBlockStatement (expectBraces bool) astNodeBlock {
+  if expectBraces {
+    p.expectPunctuation("{")
+  }
+
+  // Parse statements
+  var stmts []astNode
+  for !p.tokens.endOfStream {
+    stmts = append(stmts, p.parseComponent(true))
+    // TODO: Find out how we need to enforce line seperation.
+    //p.expectToken(tkLineTerminator)
+
+    if expectBraces && p.isNextPunctuation("}") {
+      break
+    }
+  }
+
+  if expectBraces {
+    p.expectPunctuation("}")
+  }
+
+  return astNodeBlock{
+    nodes: stmts,
+  }
 }
 
 func (p *Parser) parseStatement (t token) astNode {
@@ -179,16 +262,17 @@ func (p *Parser) parseStatement (t token) astNode {
     }
   }
 
+  if t.getTokenType() == tkPunctuation {
+    if t.(punctuationToken).punctuation == "{" {
+      return p.parseBlockStatement(true)
+    }
+  }
+
   panic("Unhandled AST node type in parseStatement!")
 }
 
 func (p *Parser) ParseAST () []astNode {
-  var ast []astNode
-  for !p.tokens.endOfStream {
-    ast = append(ast, p.parseComponent(true))
-    p.expectToken(tkLineTerminator)
-  }
-  p.ast = ast
+  p.ast = p.parseBlockStatement(false).nodes
 
   return p.ast
 }

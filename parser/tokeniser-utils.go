@@ -83,18 +83,19 @@ func isOperator (str string) bool {
 }
 
 func isKeyword (str string) bool {
-  res := []string { "let", "const" }
+  res := []string { "let", "const", "function" }
   return inArray(str, res)
 }
 
 func isPunctuation (str string) bool {
-  punc := strings.Split("(,)", "")
+  punc := strings.Split("(,){}", "")
   return inArray(str, punc)
 }
 
 // TODO: Automatic Semicolon Insertion
+var lineTerminators = ";\n"
 func isLineTerminator (str string) bool {
-  terms := strings.Split(";\n", "")
+  terms := strings.Split(lineTerminators, "")
   return inArray(str, terms)
 }
 
@@ -108,7 +109,9 @@ func isNumberChar (str string) bool {
   return inArray(str, numChars)
 }
 
+// NOTE: lineTerminators are also whitespace
+var whitespace = " \t\r" + lineTerminators
 func isWhitespace (str string) bool {
-  whitespaceChars := strings.Split(" \t\r", "")
+  whitespaceChars := strings.Split(whitespace, "")
   return inArray(str, whitespaceChars)
 }

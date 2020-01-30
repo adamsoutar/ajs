@@ -8,7 +8,8 @@ type readDecider func(string) bool
 type tokenStream struct {
   code stringStream
   current token
-  nextWillEndStream bool
+  // Allows you to read() the second to last token
+  consumedEnd bool
   endOfStream bool
 }
 
@@ -18,13 +19,12 @@ func (t *tokenStream) peek () token {
 
 func (t *tokenStream) read () token {
   var c = t.peek()
-  if t.nextWillEndStream {
-    t.endOfStream = true
-    return c
-  }
   t.current = t.readNext()
+
+  t.readWhile(isWhitespace)
+
   if t.code.endOfStream {
-    t.nextWillEndStream = true
+    t.endOfStream = true
   }
   return c
 }
@@ -79,7 +79,12 @@ func (t *tokenStream) readOperator () token {
 
 func (t *tokenStream) readNext () token {
   t.readWhile(isWhitespace)
-  if t.code.endOfStream {
+  if t.endOfStream && !t.consumedEnd {
+    t.consumedEnd = true
+    return lineTerminatorToken{}
+  }
+
+  if t.endOfStream {
     panic("Attempted a token read past the end of the code!")
   }
 

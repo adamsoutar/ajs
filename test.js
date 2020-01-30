@@ -1,1 +1,5 @@
-console.log("Hello") + 3 * myfunc.test.hello(obj.prop("Hello?"))
+function hello (name) {
+    console.log("Hello" + name + "!")
+}
+
+hello("Adam")

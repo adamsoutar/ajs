@@ -8,12 +8,28 @@ const (
 	astBinary
 	astAssignment
 	astFunctionCall
+	astFunctionDefinition
 	astBlock
 	astPropertyAccess
+	astEmptyStatement
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeEmptyStatement struct {}
+func (e astNodeEmptyStatement) getNodeType () astType {
+	return astEmptyStatement
+}
+
+type astNodeFunctionDefinition struct {
+	name string
+	params []string
+	body astNodeBlock
+}
+func (fD astNodeFunctionDefinition) getNodeType () astType {
+	return astFunctionDefinition
 }
 
 type astNodePropertyAccess struct {
