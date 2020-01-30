@@ -1,35 +1,8 @@
 package parser
 
-import "fmt"
-
 type Parser struct {
   tokens tokenStream
   ast []astNode
-}
-
-func (p *Parser) PrintAll() {
-  for true {
-    var tk = p.tokens.read()
-
-    var tp = tk.getTokenType()
-    switch tp {
-      case tkString:
-        fmt.Println("STRING: " + tk.(stringToken).value)
-      case tkIdentifier:
-        fmt.Println("IDENTIFIER: " + tk.(identifierToken).value)
-      case tkNumber:
-        var numStr = fmt.Sprintf("%f", tk.(numberToken).value)
-        fmt.Println("NUMBER: " + numStr)
-      case tkOperator:
-        fmt.Println("OPERATOR:" + tk.(operatorToken).operator)
-      default:
-        fmt.Println("UNKNOWN TOKEN - Probably invalid token")
-    }
-
-    if p.tokens.endOfStream {
-      break
-    }
-  }
 }
 
 func (p *Parser) isNextOperator () bool {

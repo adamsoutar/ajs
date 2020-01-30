@@ -8,6 +8,9 @@ var operatorPrecedence = map[string]int {
 	"/": 14,
 	".": 18,
 }
+var assignmentOperators = []string {
+	"=",
+}
 
 type associativity bool
 const (
