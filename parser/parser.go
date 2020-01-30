@@ -95,7 +95,7 @@ func (p *Parser) mightBePropertyAccess (me astNode) astNode {
     p.tokens.read()
     return astNodePropertyAccess{
       object: me,
-      property: p.parseAtom(false),
+      property: p.mightBePropertyAccess(p.parseAtom(false)),
     }
   }
 
