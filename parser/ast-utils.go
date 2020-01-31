@@ -13,10 +13,18 @@ const (
 	astPropertyAccess
 	astEmptyStatement
 	astVariableDeclaration
+	astReturnStatement
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeReturnStatement struct {
+	arg astNode
+}
+func (r astNodeReturnStatement) getNodeType () astType {
+	return astReturnStatement
 }
 
 type astNodeEmptyStatement struct {}

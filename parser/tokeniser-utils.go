@@ -94,7 +94,7 @@ func isOperator (str string) bool {
 }
 
 func isKeyword (str string) bool {
-  res := []string { "let", "const", "var", "function" }
+  res := []string { "let", "const", "var", "function", "return" }
   return inStringArray(str, res)
 }
 

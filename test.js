@@ -1,3 +1,9 @@
-let x = 3
-const y = 4
-var z = 5
+function test1 (func) {
+    return function test2 () {
+        return func()
+    }
+}
+
+test1(function testing () {
+    console.log("Hello, world!")
+})()

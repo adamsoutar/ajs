@@ -110,12 +110,14 @@ func (p *Parser) mightBeAssignment (me astNode) astNode {
 }
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
+  // TODO: Find a nicer way to lay this out
   return p.mightBeBinary(
     p.mightBeAssignment(
-    p.mightBePropertyAccess(
-    p.mightBeCall(
       p.mightBePropertyAccess(
-      p.parseAtom(acceptStatements))))), 0)
+        p.mightBeCall(
+          p.mightBePropertyAccess(
+            p.parseAtom(
+              acceptStatements))))), 0)
 }
 
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
@@ -271,6 +273,9 @@ func (p *Parser) parseStatement (t token) astNode {
       return p.parseVariableDeclaration(true, false)
     case "var":
       return p.parseVariableDeclaration(false, true)
+    case "return":
+      var arg = p.parseComponent(false)
+      return astNodeReturnStatement{arg: arg}
     }
   }
 
