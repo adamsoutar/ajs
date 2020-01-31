@@ -117,11 +117,11 @@ func (p *Parser) parseAssigment (isConst bool) astNode {
   }
 
   // Expect the =
-  // TODO: Generic isNextOperator() method
-  var eq = p.tokens.read()
-  if eq.getTokenType() != tkOperator || eq.(operatorToken).operator != "=" {
+  // TODO: Generic expectOperator() method
+  if !p.isNextOperator("=") {
     panic("After let x, you must have an = operator.")
   }
+  p.tokens.read()
 
   var value = p.parseComponent(false)
 
