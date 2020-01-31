@@ -70,10 +70,10 @@ func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
 func (p *Parser) mightBePropertyAccess (me astNode) astNode {
   if p.isNextOperator(".") {
     p.tokens.read()
-    return astNodePropertyAccess{
+    return p.mightBePropertyAccess(astNodePropertyAccess{
       object: me,
-      property: p.mightBePropertyAccess(p.parseAtom(false)),
-    }
+      property: p.parseAtom(false),
+    })
   }
 
   return me
@@ -108,6 +108,14 @@ func (p *Parser) mightBeAssignment (me astNode) astNode {
     operator: op,
   }
 }
+
+/*
+func (p *Parser) mightBeCalls (me astNode) astNode {
+  for {
+  }
+  return me
+}
+*/
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
   // TODO: Find a nicer way to lay this out
