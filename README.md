@@ -20,3 +20,10 @@ Parsing for:
  - Strings, numbers and identifiers
  - Property access
  - Variable assignment (var/let/const/re-assignment)
+
+I am currently judging correct parser output as being similar to that of 
+[ASTExplorer](https://astexplorer.net/) with the 
+[acorn 7.0.0](https://github.com/acornjs/acorn) backend.
+
+I am not (yet) planning to support any fancy new features like generator
+functions, classes, or most ES6 syntax.
