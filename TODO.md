@@ -2,7 +2,6 @@
 
 TODO **features**, small TODOs are inlined in comments
 
- - objects
  - computed property access
  - if statements
  - boolean expressions

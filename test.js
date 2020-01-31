@@ -1,9 +1,5 @@
-function test1 (func) {
-    return function test2 () {
-        return func()
-    }
+let x = {
+    hello: "World",
+    "quoted key": 2,
+    3: 4
 }
-
-test1(function testing () {
-    console.log("Hello, world!")
-})()

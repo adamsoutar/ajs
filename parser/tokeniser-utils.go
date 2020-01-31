@@ -99,7 +99,7 @@ func isKeyword (str string) bool {
 }
 
 func isPunctuation (str string) bool {
-  punc := strings.Split("(,){}", "")
+  punc := strings.Split("(,){:}", "")
   return inStringArray(str, punc)
 }
 

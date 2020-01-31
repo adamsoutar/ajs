@@ -131,6 +131,29 @@ func (p *Parser) parseComponent (acceptStatements bool) astNode {
   return final
 }
 
+func (p *Parser) parseObject () astNode {
+  var obj = make(map[astNode]astNode)
+  for {
+    var key = p.parseAtom(false)
+    p.expectPunctuation(":")
+    var value = p.parseComponent(false)
+
+    obj[key] = value
+
+    if !p.isNextPunctuation(",") {
+      break
+    }
+    // Read in the comma
+    p.tokens.read()
+  }
+
+  p.expectPunctuation("}")
+
+  return astNodeObject {
+    valueMap: obj,
+  }
+}
+
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
   var t = p.tokens.read()
 
@@ -167,7 +190,10 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
   }
 
   if !acceptStatements {
-    // TODO: If expecting an expression and you see {, parse an object here
+    if t.getTokenType() == tkPunctuation &&
+      t.(punctuationToken).punctuation == "{" {
+      return p.parseObject()
+    }
   }
 
   if !acceptStatements {

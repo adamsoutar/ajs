@@ -14,10 +14,18 @@ const (
 	astEmptyStatement
 	astVariableDeclaration
 	astReturnStatement
+	astObject
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeObject struct {
+	valueMap map[astNode]astNode
+}
+func (o astNodeObject) getNodeType () astType {
+	return astObject
 }
 
 type astNodeReturnStatement struct {
