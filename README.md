@@ -21,6 +21,7 @@ Parsing for:
  - Strings, numbers and identifiers
  - Property access
  - Variable assignment (var/let/const/re-assignment)
+ - If statements
 
 I am currently judging correct parser output as being similar to that of 
 [ASTExplorer](https://astexplorer.net/) with the 
