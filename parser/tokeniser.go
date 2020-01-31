@@ -94,10 +94,12 @@ func (t *tokenStream) readNext () token {
     return t.readString()
   }
 
-  if t.current != nil && t.current.getTokenType() != tkIdentifier {
+  if t.current != nil &&
+      t.current.getTokenType() != tkIdentifier &&
+      t.current.getTokenType() != tkPunctuation {
     // This reads numbers like .5 before it assumes them to be
     // property access, which can only occur if the previous token
-    // was an identifier
+    // was an identifier or the ) punctuation
     if isNumberChar(ch) {
       return t.readNumber()
     }

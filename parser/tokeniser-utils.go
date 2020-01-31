@@ -64,9 +64,20 @@ func (o operatorToken) getTokenType () tokenType {
   return tkOperator
 }
 
-func inArray (str string, arr []string) bool {
+func inStringArray(str string, arr []string) bool {
   for _, el := range arr {
     if el == str {
+      return true
+    }
+  }
+  return false
+}
+// These two functions are identical.
+// Can't merge them because go doesn't have generics...
+// or an stdLib way of telling if something's in an array it seems.
+func inAstTypeArray (as astType, arr []astType) bool {
+  for _, el := range arr {
+    if el == as {
       return true
     }
   }
@@ -75,43 +86,43 @@ func inArray (str string, arr []string) bool {
 
 func isOperatorChar (str string) bool {
   opChars := strings.Split("=!&|+-/*%><^.", "")
-  return inArray(str, opChars)
+  return inStringArray(str, opChars)
 }
 func isOperator (str string) bool {
   ops := getOperators()
-  return inArray(str, ops)
+  return inStringArray(str, ops)
 }
 
 func isKeyword (str string) bool {
-  res := []string { "let", "const", "function" }
-  return inArray(str, res)
+  res := []string { "let", "const", "var", "function" }
+  return inStringArray(str, res)
 }
 
 func isPunctuation (str string) bool {
   punc := strings.Split("(,){}", "")
-  return inArray(str, punc)
+  return inStringArray(str, punc)
 }
 
 // TODO: Automatic Semicolon Insertion
 var lineTerminators = ";\n"
 func isLineTerminator (str string) bool {
   terms := strings.Split(lineTerminators, "")
-  return inArray(str, terms)
+  return inStringArray(str, terms)
 }
 
 func isIdentifierChar (str string) bool {
   idenChars := strings.Split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$_0123456789", "")
-  return inArray(str, idenChars)
+  return inStringArray(str, idenChars)
 }
 
 func isNumberChar (str string) bool {
   numChars := strings.Split("0123456789.", "")
-  return inArray(str, numChars)
+  return inStringArray(str, numChars)
 }
 
 // NOTE: lineTerminators are also whitespace
 var whitespace = " \t\r" + lineTerminators
 func isWhitespace (str string) bool {
   whitespaceChars := strings.Split(whitespace, "")
-  return inArray(str, whitespaceChars)
+  return inStringArray(str, whitespaceChars)
 }

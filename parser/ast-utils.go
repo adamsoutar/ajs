@@ -12,6 +12,7 @@ const (
 	astBlock
 	astPropertyAccess
 	astEmptyStatement
+	astVariableDeclaration
 )
 
 type astNode interface {
@@ -85,9 +86,21 @@ func (b astNodeBinary) getNodeType () astType {
 	return astBinary
 }
 
+type astNodeVariableDeclaration struct {
+	varName string
+	// These two flags should NOT be set at once
+	isConstant bool
+	isHoisted bool
+	value astNode//? (nullable)
+}
+func (vD astNodeVariableDeclaration) getNodeType () astType {
+	return astVariableDeclaration
+}
+
 type astNodeAssignment struct {
-	varNm string
-	value astNode
+	variable astNode
+	value    astNode
+	operator string
 }
 func (a astNodeAssignment) getNodeType () astType {
 	return astAssignment

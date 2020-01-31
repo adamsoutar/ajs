@@ -9,6 +9,12 @@ func (p *Parser) parseDelimited (opening string, delim string, closing string) [
   var args []astNode
   p.expectPunctuation(opening)
 
+  // Functions etc. can have no args
+  if p.isNextPunctuation(closing) {
+    p.tokens.read()
+    return []astNode {}
+  }
+
   for {
     args = append(args, p.parseComponent(false))
 
@@ -44,10 +50,6 @@ func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
     var op = p.tokens.peek().(operatorToken).operator
 
     var theirPrecedence = operatorPrecedence[op]
-    var theirAssociativity = operatorAssociativity[op]
-    if theirAssociativity != rightAssociative {
-      panic("Wasn't expecting an with right associativity here!")
-    }
 
     if theirPrecedence > myPrecedence {
       p.tokens.read()
@@ -77,30 +79,43 @@ func (p *Parser) mightBePropertyAccess (me astNode) astNode {
   return me
 }
 
-func (p *Parser) parseAssigment (isConst bool) astNode {
-  // TODO: Support const x = 3, y = 2, z = 1 syntax
+func (p *Parser) mightBeAssignment (me astNode) astNode {
+  var t = p.tokens.peek()
 
-  // Read in the vars
-  var t = p.tokens.read()
-  if t.getTokenType() != tkIdentifier {
-    panic("Attempted assignment to something that's not a variable. ie. let 3 = 4")
+  if t.getTokenType() != tkOperator {
+    return me
   }
 
-  p.expectOperator("=")
+  var op = t.(operatorToken).operator
+  if !inStringArray(op, assignmentOperators) {
+    return me
+  }
 
-  var value = p.parseComponent(false)
+  // It's an assignment
+  p.tokens.read()
+
+  var validToAssignTo = []astType{ astIdentifier, astPropertyAccess }
+  var meType = me.getNodeType()
+  if !inAstTypeArray(meType, validToAssignTo) {
+    panic("Invalid left side to assignment (eg. 3 = 4)")
+  }
+
+  var assigningValue = p.parseComponent(false)
 
   return astNodeAssignment{
-    value: value,
-    varNm: t.(identifierToken).value,
+    variable: me,
+    value:    assigningValue,
+    operator: op,
   }
 }
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
   return p.mightBeBinary(
+    p.mightBeAssignment(
+    p.mightBePropertyAccess(
     p.mightBeCall(
       p.mightBePropertyAccess(
-      p.parseAtom(acceptStatements))), 0)
+      p.parseAtom(acceptStatements))))), 0)
 }
 
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
@@ -189,6 +204,37 @@ func (p *Parser) parseFunctionDefinition () astNode {
   }
 }
 
+// astNodeVariableDeclaration is basically an assignment with loads of verification
+func (p *Parser) parseVariableDeclaration (isConstant bool, isHoisted bool) astNode {
+  var nxt = p.parseComponent(false)
+
+  if isConstant && isHoisted {
+    panic("Variable declaration is both constant (const) *and* hoisted (var)? Mistake in parser?")
+  }
+
+  // TODO: Allow an undefined var dec (eg. let x;)
+  if nxt.getNodeType() != astAssignment {
+    panic("Variable declaration not followed by assignment")
+  }
+
+  var assign = nxt.(astNodeAssignment)
+  if assign.operator != "=" {
+    panic("Variable declaration with non = operator (eg. let x *= 3)")
+  }
+
+  if assign.variable.getNodeType() != astIdentifier {
+    panic("Variable declaration of non-identifier. (eg. let func() = 3)")
+  }
+  var ident = assign.variable.(astNodeIdentifier)
+
+  return astNodeVariableDeclaration {
+    varName: ident.name,
+    value: assign.value,
+    isConstant: isConstant,
+    isHoisted: isHoisted,
+  }
+}
+
 func (p *Parser) parseBlockStatement (expectBraces bool) astNodeBlock {
   if expectBraces {
     p.expectPunctuation("{")
@@ -198,7 +244,7 @@ func (p *Parser) parseBlockStatement (expectBraces bool) astNodeBlock {
   var stmts []astNode
   for !p.tokens.endOfStream {
     stmts = append(stmts, p.parseComponent(true))
-    // TODO: Find out how we need to enforce line seperation.
+    // TODO: Find out how we need to enforce line separation
     //p.expectToken(tkLineTerminator)
 
     if expectBraces && p.isNextPunctuation("}") {
@@ -220,9 +266,11 @@ func (p *Parser) parseStatement (t token) astNode {
     var keyword = t.(keywordToken).value
     switch keyword {
     case "let":
-      return p.parseAssigment(false)
+      return p.parseVariableDeclaration(false, false)
     case "const":
-      return p.parseAssigment(true)
+      return p.parseVariableDeclaration(true, false)
+    case "var":
+      return p.parseVariableDeclaration(false, true)
     }
   }
 
