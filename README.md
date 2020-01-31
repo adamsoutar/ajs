@@ -19,3 +19,4 @@ Parsing for:
  - Left-associative binary operators
  - Strings, numbers and identifiers
  - Property access
+ - Variable assignment (var/let/const/re-assignment)
