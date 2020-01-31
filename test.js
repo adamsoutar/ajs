@@ -1,5 +1,1 @@
-function hello (name) {
-    console.log("Hello" + name + "!")
-}
-
-hello("Adam")
+(3 + 4) * 2

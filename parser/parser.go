@@ -54,8 +54,13 @@ func (p *Parser) parseDelimited (opening string, delim string, closing string) [
 }
 
 func (p *Parser) mightBeCall (node astNode) astNode {
-  // TODO: Panic if we're calling something stupid eg. 3.14("Hello")
   if p.isNextPunctuation("(") {
+    // NOTE: This doesn't stop you calling something stupid using property access,
+    //       that's for the interpreter. But it handles what you can from the parser side
+    if node.getNodeType() != astIdentifier && node.getNodeType() != astPropertyAccess {
+      panic("Called something unreasonable (eg. 3.14())")
+    }
+
     return astNodeFunctionCall{
       funcName: node,
       args: p.parseDelimited("(", ",", ")"),
@@ -103,17 +108,12 @@ func (p *Parser) mightBePropertyAccess (me astNode) astNode {
 }
 
 func (p *Parser) parseAssigment (isConst bool) astNode {
-  // Read in the vars
-  var vars []string
-  for {
-    var t = p.tokens.read()
-    if t.getTokenType() != tkIdentifier {
-      panic("Attempted assignment to something that's not a variable. ie. let 3 = 4")
-    }
-    vars = append(vars, t.(identifierToken).value)
+  // TODO: Support const x = 3, y = 2, z = 1 syntax
 
-    // TODO: Implement check for ',' after punctuation is in
-    break
+  // Read in the vars
+  var t = p.tokens.read()
+  if t.getTokenType() != tkIdentifier {
+    panic("Attempted assignment to something that's not a variable. ie. let 3 = 4")
   }
 
   // Expect the =
@@ -126,7 +126,7 @@ func (p *Parser) parseAssigment (isConst bool) astNode {
 
   return astNodeAssignment{
     value: value,
-    vars: vars,
+    varNm: t.(identifierToken).value,
   }
 }
 
@@ -150,7 +150,14 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
   var t = p.tokens.read()
 
   // Attempt to parse an expression
-  // TODO: Bracketed expressions
+  if t.getTokenType() == tkPunctuation {
+    // Bracketed expressions
+    if t.(punctuationToken).punctuation == "(" {
+      var exp = p.parseComponent(false)
+      p.expectPunctuation(")")
+      return exp
+    }
+  }
 
   if t.getTokenType() == tkLineTerminator {
     return astNodeEmptyStatement{}

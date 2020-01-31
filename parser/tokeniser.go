@@ -93,11 +93,20 @@ func (t *tokenStream) readNext () token {
   if ch == "\"" {
     return t.readString()
   }
+
+  if t.current != nil && t.current.getTokenType() != tkIdentifier {
+    // This reads numbers like .5 before it assumes them to be
+    // property access, which can only occur if the previous token
+    // was an identifier
+    if isNumberChar(ch) {
+      return t.readNumber()
+    }
+  }
+
   if isOperatorChar(ch) {
     return t.readOperator()
   }
   // Numbers and identifiers overlap, but numbers come first
-  // TODO: Numbers like .5, that looks like the member access operator
   if isNumberChar(ch) {
     return t.readNumber()
   }

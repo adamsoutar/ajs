@@ -86,7 +86,7 @@ func (b astNodeBinary) getNodeType () astType {
 }
 
 type astNodeAssignment struct {
-	vars []string
+	varNm string
 	value astNode
 }
 func (a astNodeAssignment) getNodeType () astType {
