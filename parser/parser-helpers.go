@@ -15,13 +15,6 @@ func (p *Parser) isNextOperator (params ...string) bool {
 	return isOp && opNext.(operatorToken).operator == params[0]
 }
 
-func (p *Parser) expectPunctuation (punc string) {
-	var t = p.tokens.read()
-	if t.getTokenType() != tkPunctuation || t.(punctuationToken).punctuation != punc {
-		panic("Expected punctuation \"" + punc + "\"")
-	}
-}
-
 func (p *Parser) isNextPunctuation (punc string) bool {
 	var t = p.tokens.peek()
 	if t.getTokenType() != tkPunctuation || t.(punctuationToken).punctuation != punc {
@@ -29,6 +22,22 @@ func (p *Parser) isNextPunctuation (punc string) bool {
 	}
 	return true
 }
+
+func (p *Parser) isNextKeyword (keyword string) bool {
+	var t = p.tokens.peek()
+	if t.getTokenType() != tkKeyword || t.(keywordToken).value != keyword {
+		return false
+	}
+	return true
+}
+
+func (p *Parser) expectPunctuation (punc string) {
+	var t = p.tokens.read()
+	if t.getTokenType() != tkPunctuation || t.(punctuationToken).punctuation != punc {
+		panic("Expected punctuation \"" + punc + "\"")
+	}
+}
+
 
 func (p *Parser) expectToken (typ tokenType) token {
 	var tk = p.tokens.read()

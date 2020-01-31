@@ -15,10 +15,20 @@ const (
 	astVariableDeclaration
 	astReturnStatement
 	astObject
+	astIfStatement
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeIfStatement struct {
+	condition astNode
+	thenPart astNode
+	elsePart astNode
+}
+func (i astNodeIfStatement) getNodeType () astType {
+	return astIfStatement
 }
 
 type astNodeObject struct {

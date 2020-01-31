@@ -234,7 +234,7 @@ func (p *Parser) parseFunctionDefinition () astNode {
   }
   p.expectPunctuation(")")
 
-  var body = p.parseBlockStatement(true)
+  var body = p.parseBlockStatement(true, true)
 
   return astNodeFunctionDefinition{
     name: name,
@@ -274,8 +274,8 @@ func (p *Parser) parseVariableDeclaration (isConstant bool, isHoisted bool) astN
   }
 }
 
-func (p *Parser) parseBlockStatement (expectBraces bool) astNodeBlock {
-  if expectBraces {
+func (p *Parser) parseBlockStatement (expectBraces bool, ignoreFirst bool) astNodeBlock {
+  if expectBraces && !ignoreFirst {
     p.expectPunctuation("{")
   }
 
@@ -300,6 +300,25 @@ func (p *Parser) parseBlockStatement (expectBraces bool) astNodeBlock {
   }
 }
 
+func (p *Parser) parseIfStatement () astNode {
+  p.expectPunctuation("(")
+  var cond = p.parseComponent(false)
+  p.expectPunctuation(")")
+  var thenPart = p.parseComponent(true)
+
+  var elsePart astNode = astNodeEmptyStatement{}
+  if p.isNextKeyword("else") {
+    p.tokens.read()
+    elsePart = p.parseComponent(true)
+  }
+
+  return astNodeIfStatement{
+    condition: cond,
+    thenPart: thenPart,
+    elsePart: elsePart,
+  }
+}
+
 func (p *Parser) parseStatement (t token) astNode {
   if t.getTokenType() == tkKeyword {
     var keyword = t.(keywordToken).value
@@ -313,12 +332,14 @@ func (p *Parser) parseStatement (t token) astNode {
     case "return":
       var arg = p.parseComponent(false)
       return astNodeReturnStatement{arg: arg}
+    case "if":
+      return p.parseIfStatement()
     }
   }
 
   if t.getTokenType() == tkPunctuation {
     if t.(punctuationToken).punctuation == "{" {
-      return p.parseBlockStatement(true)
+      return p.parseBlockStatement(true, true)
     }
   }
 
@@ -326,7 +347,7 @@ func (p *Parser) parseStatement (t token) astNode {
 }
 
 func (p *Parser) ParseAST () []astNode {
-  p.ast = p.parseBlockStatement(false).nodes
+  p.ast = p.parseBlockStatement(false, false).nodes
 
   return p.ast
 }
