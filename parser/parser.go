@@ -29,20 +29,21 @@ func (p *Parser) parseDelimited (opening string, delim string, closing string) [
   return args
 }
 
-func (p *Parser) mightBeCall (node astNode) astNode {
+func (p *Parser) mightBeCall (node astNode) (bool, astNode) {
   if p.isNextPunctuation("(") {
     // NOTE: This doesn't stop you calling something stupid using property access,
     //       that's for the interpreter. But it handles what you can from the parser side
-    if node.getNodeType() != astIdentifier && node.getNodeType() != astPropertyAccess {
+    var validCalls = []astType { astIdentifier, astPropertyAccess, astFunctionCall }
+    if !inAstTypeArray(node.getNodeType(), validCalls) {
       panic("Called something unreasonable (eg. 3.14())")
     }
 
-    return astNodeFunctionCall{
+    return true, astNodeFunctionCall{
       funcName: node,
       args: p.parseDelimited("(", ",", ")"),
     }
   }
-  return node
+  return false, node
 }
 
 func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
@@ -109,20 +110,24 @@ func (p *Parser) mightBeAssignment (me astNode) astNode {
   }
 }
 
-/*
 func (p *Parser) mightBeCalls (me astNode) astNode {
+  // For successive calls eg. myFunc()()
   for {
+    var wasCall, newNode = p.mightBeCall(me)
+    me = newNode
+    if !wasCall {
+      break
+    }
   }
   return me
 }
-*/
 
 func (p *Parser) parseComponent (acceptStatements bool) astNode {
   // TODO: Find a nicer way to lay this out
   return p.mightBeBinary(
     p.mightBeAssignment(
       p.mightBePropertyAccess(
-        p.mightBeCall(
+        p.mightBeCalls(
           p.mightBePropertyAccess(
             p.parseAtom(
               acceptStatements))))), 0)
