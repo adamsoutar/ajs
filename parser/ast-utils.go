@@ -16,10 +16,27 @@ const (
 	astReturnStatement
 	astObject
 	astIfStatement
+	astWhileLoop
+	astBoolean
 )
 
 type astNode interface {
 	getNodeType() astType
+}
+
+type astNodeBoolean struct {
+	value bool
+}
+func (b astNodeBoolean) getNodeType () astType {
+	return astBoolean
+}
+
+type astNodeWhileLoop struct {
+	condition astNode
+	body astNode
+}
+func (w astNodeWhileLoop) getNodeType () astType {
+	return astWhileLoop
 }
 
 type astNodeIfStatement struct {

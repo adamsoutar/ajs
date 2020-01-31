@@ -52,6 +52,14 @@ func (t *tokenStream) readString () token {
 
 func (t *tokenStream) readIdentifierOrKeyword () token {
   var idenStr = t.readWhile(isIdentifierChar)
+
+  // Boolean literals
+  if idenStr == "true" || idenStr == "false" {
+    return booleanToken{
+      value: idenStr == "true",
+    }
+  }
+
   if isKeyword(idenStr) {
     return keywordToken{value:idenStr}
   }

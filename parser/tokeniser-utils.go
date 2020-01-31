@@ -7,6 +7,7 @@ const (
   tkString tokenType = iota
   tkNumber
   tkIdentifier
+  tkBoolean
   tkKeyword
   tkOperator
   tkLineTerminator
@@ -15,6 +16,13 @@ const (
 
 type token interface {
   getTokenType() tokenType
+}
+
+type booleanToken struct {
+  value bool
+}
+func (b booleanToken) getTokenType () tokenType {
+  return tkBoolean
 }
 
 type lineTerminatorToken struct {}
@@ -94,7 +102,7 @@ func isOperator (str string) bool {
 }
 
 func isKeyword (str string) bool {
-  res := []string { "let", "const", "var", "function", "return", "if", "else" }
+  res := []string { "let", "const", "var", "function", "return", "if", "else", "while" }
   return inStringArray(str, res)
 }
 

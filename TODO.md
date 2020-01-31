@@ -3,9 +3,8 @@
 TODO **features**, small TODOs are inlined in comments
 
  - computed property access
- - boolean expressions
+ - logical expressions
  - for loops
- - while loops
  - switch statements
  - throw statements
  - constructors (new)

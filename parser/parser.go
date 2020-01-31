@@ -178,6 +178,8 @@ func (p *Parser) parseAtom (acceptStatements bool) astNode {
     return astNodeString{value:t.(stringToken).value}
   case tkIdentifier:
     return astNodeIdentifier{name:t.(identifierToken).value}
+  case tkBoolean:
+    return astNodeBoolean{value:t.(booleanToken).value}
   }
 
   // Non-statement keyword expressions
@@ -319,6 +321,19 @@ func (p *Parser) parseIfStatement () astNode {
   }
 }
 
+func (p *Parser) parseWhileLoop () astNode {
+  p.expectPunctuation("(")
+  var cond = p.parseComponent(false)
+  p.expectPunctuation(")")
+
+  var body = p.parseComponent(true)
+
+  return astNodeWhileLoop{
+    condition: cond,
+    body: body,
+  }
+}
+
 func (p *Parser) parseStatement (t token) astNode {
   if t.getTokenType() == tkKeyword {
     var keyword = t.(keywordToken).value
@@ -334,6 +349,8 @@ func (p *Parser) parseStatement (t token) astNode {
       return astNodeReturnStatement{arg: arg}
     case "if":
       return p.parseIfStatement()
+    case "while":
+      return p.parseWhileLoop()
     }
   }
 
