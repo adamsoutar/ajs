@@ -9,3 +9,13 @@ a JavaScript parser. It doesn't do much at the moment, but one day I'd like
 to finish it or maybe even add a basic interpreter.
 
 ![Example AST](./ASTScreenshot.png)
+
+## Current (*experimental!*) features
+
+Parsing for:
+
+ - Function definitions
+ - Function calls
+ - Left-associative binary operators
+ - Strings, numbers and identifiers
+ - Property access
