@@ -1,1 +1,1 @@
-myfunc()()()()
+one.two.three().test.test2()

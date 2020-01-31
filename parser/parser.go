@@ -68,16 +68,16 @@ func (p *Parser) mightBeBinary (me astNode, myPrecedence int) astNode {
   return me
 }
 
-func (p *Parser) mightBePropertyAccess (me astNode) astNode {
+func (p *Parser) mightBePropertyAccess (me astNode) (bool, astNode) {
   if p.isNextOperator(".") {
     p.tokens.read()
-    return p.mightBePropertyAccess(astNodePropertyAccess{
+    return true, astNodePropertyAccess{
       object: me,
       property: p.parseAtom(false),
-    })
+    }
   }
 
-  return me
+  return false, me
 }
 
 func (p *Parser) mightBeAssignment (me astNode) astNode {
@@ -110,27 +110,25 @@ func (p *Parser) mightBeAssignment (me astNode) astNode {
   }
 }
 
-func (p *Parser) mightBeCalls (me astNode) astNode {
-  // For successive calls eg. myFunc()()
+func (p *Parser) parseComponent (acceptStatements bool) astNode {
+  var nd = p.parseAtom(acceptStatements)
   for {
-    var wasCall, newNode = p.mightBeCall(me)
-    me = newNode
-    if !wasCall {
+    var changed = false
+    var wasAccess, newNode1 = p.mightBePropertyAccess(nd)
+    changed = changed || wasAccess
+    nd = newNode1
+
+    var wasCall, newNode2 = p.mightBeCall(nd)
+    changed = changed || wasCall
+    nd = newNode2
+
+    if !changed {
       break
     }
   }
-  return me
-}
 
-func (p *Parser) parseComponent (acceptStatements bool) astNode {
-  // TODO: Find a nicer way to lay this out
-  return p.mightBeBinary(
-    p.mightBeAssignment(
-      p.mightBePropertyAccess(
-        p.mightBeCalls(
-          p.mightBePropertyAccess(
-            p.parseAtom(
-              acceptStatements))))), 0)
+  var final = p.mightBeBinary(p.mightBeAssignment(nd), 0)
+  return final
 }
 
 func (p *Parser) parseAtom (acceptStatements bool) astNode {
