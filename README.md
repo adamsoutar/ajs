@@ -14,6 +14,7 @@ to finish it or maybe even add a basic interpreter.
 
 Parsing for:
 
+ - Object literals
  - Function definitions
  - Function calls
  - Left-associative binary operators
