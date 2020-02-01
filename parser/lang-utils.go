@@ -1,12 +1,30 @@
 package parser
 
+// TODO: Wordy operators like instanceof
 // This is only for binary operators
 var operatorPrecedence = map[string]int {
 	"+": 13,
 	"-": 13,
 	"*": 14,
+	"**": 14,
+	"%": 14,
 	"/": 14,
-	".": 18,
+	"==": 10,
+	"!=": 10,
+	"===": 10,
+	"!==": 10,
+	"&": 9,
+	"^": 8,
+	"|": 7,
+	"&&": 6,
+	"||": 5,
+	">=": 11,
+	">": 11,
+	"<=": 11,
+	"<": 11,
+	">>>": 12,
+	">>": 12,
+	"<<": 12,
 }
 var assignmentOperators = []string {
 	"=",
