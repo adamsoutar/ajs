@@ -3,6 +3,8 @@ package parser
 // TODO: Wordy operators like instanceof
 // This is only for binary operators
 var operatorPrecedence = map[string]int {
+	".": 0, // Not a real binary operator,
+			// Still here for the tokeniser
 	"+": 13,
 	"-": 13,
 	"*": 14,
